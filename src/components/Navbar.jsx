@@ -1,37 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaPhone, FaEnvelope, FaFacebook, FaTwitter, FaLinkedin, FaBars, FaTimes } from "react-icons/fa";
 
-const Navbar = () => {
+const Navbar = ({ isAuthenticated }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const authStatus = localStorage.getItem("isAuthenticated");
-    setIsAuthenticated(authStatus === "true");
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("role");
+  
     setIsAuthenticated(false);
-    navigate("/login"); // Redirect to login page after logout
+    setUserRole("patient"); // Reset role
+  
+    navigate("/login");
   };
-
-  const MenuItems = () => (
-    <>
-      <li><Link to="/" className="text-teal-600 font-semibold hover:text-teal-800">Home</Link></li>
-      <li><Link to="/about" className="hover:text-teal-600">About</Link></li>
-      <li><Link to="/predict" className="hover:text-teal-600">Predict</Link></li>
-      <li><Link to="/history" className="hover:text-teal-600">History</Link></li>
-      <li><Link to="/contact" className="hover:text-teal-600">Contact</Link></li>
-      {isAuthenticated ? (
-        <li className="cursor-pointer text-red-600 font-bold hover:text-red-800" onClick={handleLogout}>Logout</li>
-      ) : (
-        <li><Link to="/login" className="hover:text-teal-600">Login</Link></li>
-      )}
-    </>
-  );
+  
 
   return (
     <div className="font-sans">
@@ -55,7 +39,16 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <ul className="hidden md:flex gap-6 text-gray-700">
-            <MenuItems />
+            <li><Link to="/" className="text-teal-600 font-semibold hover:text-teal-800">Home</Link></li>
+            <li><Link to="/about" className="hover:text-teal-600">About</Link></li>
+            <li><Link to="/predict" className="hover:text-teal-600">Predict</Link></li>
+            <li><Link to="/history" className="hover:text-teal-600">History</Link></li>
+            <li><Link to="/contact" className="hover:text-teal-600">Contact</Link></li>
+            {isAuthenticated ? (
+              <li className="cursor-pointer text-red-600 font-bold hover:text-red-800" onClick={handleLogout}>Logout</li>
+            ) : (
+              <li><Link to="/login" className="hover:text-teal-600">Login</Link></li>
+            )}
           </ul>
 
           {/* Mobile Menu Toggle Button */}
@@ -69,7 +62,16 @@ const Navbar = () => {
         {/* Mobile Menu */}
         {isOpen && (
           <ul className="md:hidden flex flex-col bg-white shadow-lg py-4 px-6 text-gray-700">
-            <MenuItems />
+            <li><Link to="/" onClick={() => setIsOpen(false)}>Home</Link></li>
+            <li><Link to="/about" onClick={() => setIsOpen(false)}>About</Link></li>
+            <li><Link to="/predict" onClick={() => setIsOpen(false)}>Predict</Link></li>
+            <li><Link to="/history" onClick={() => setIsOpen(false)}>History</Link></li>
+            <li><Link to="/contact" onClick={() => setIsOpen(false)}>Contact</Link></li>
+            {isAuthenticated ? (
+              <li className="cursor-pointer text-red-600 font-bold hover:text-red-800" onClick={handleLogout}>Logout</li>
+            ) : (
+              <li><Link to="/login" onClick={() => setIsOpen(false)}>Login</Link></li>
+            )}
           </ul>
         )}
       </nav>

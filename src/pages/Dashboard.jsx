@@ -1,9 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaUser, FaSignOutAlt, FaTachometerAlt, FaUserShield, FaUsers, FaStethoscope } from "react-icons/fa"; // Importing icons
 import axios from "axios"; // Importing axios
-
+import { FaTrash } from "react-icons/fa";
 const Dashboard = () => {
-  const [activeSection, setActiveSection] = useState("dashboard");
+
+  const [users, setUsers] = useState([]);
+  const [activeSection, setActiveSection] = useState("users");
+  const adminId = localStorage.getItem("adminId"); // Assuming adminId is stored in localStorage
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/auth/users");
+        setUsers(response.data);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this user?")) {
+      try {
+        const adminId = "YOUR_ADMIN_ID"; // Replace with the actual admin ID, possibly from logged-in user's context
+        await axios.delete(`http://localhost:5000/api/auth/delete-user/${id}`, {
+          data: { adminId } // Sending adminId in the request body
+        });
+        setUsers(users.filter((user) => user._id !== id)); // Remove the user from the state after deletion
+      } catch (error) {
+        console.error("Error deleting user:", error);
+      }
+    }
+  };
+
+
+  const toggleRole = (id) => {
+    setUsers((prevUsers) =>
+      prevUsers.map((user) =>
+        user._id === id
+          ? { ...user, role: user.role === "admin" ? "patient" : "admin" }
+          : user
+      )
+    );
+  };
 
   // State for registration form
   const [name, setName] = useState("");
@@ -57,14 +98,14 @@ const Dashboard = () => {
         );
       case "admin-register":
         return (
-            <div className="w-full max-w-md mx-auto p-8 bg-white rounded-xl shadow-xl border border-teal-300">
+          <div className="w-full max-w-md mx-auto p-8 bg-white rounded-xl shadow-xl border border-teal-300">
             <h1 className="text-3xl font-extrabold text-teal-600 mb-6 text-center">
               Register New Admin
             </h1>
             <p className="text-lg text-teal-800 mb-6 text-center">
               Please fill in the form to create a new admin account.
             </p>
-          
+
             {/* Registration Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="mb-4">
@@ -79,7 +120,7 @@ const Dashboard = () => {
                   required
                 />
               </div>
-          
+
               <div className="mb-4">
                 <label htmlFor="email" className="block text-sm font-semibold text-teal-700">Email</label>
                 <input
@@ -92,7 +133,7 @@ const Dashboard = () => {
                   required
                 />
               </div>
-          
+
               <div className="mb-6">
                 <label htmlFor="password" className="block text-sm font-semibold text-teal-700">Password</label>
                 <input
@@ -105,11 +146,11 @@ const Dashboard = () => {
                   required
                 />
               </div>
-          
+
               {/* Error and Success Messages */}
               {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
               {successMessage && <p className="text-green-500 text-sm mt-2">{successMessage}</p>}
-          
+
               {/* Submit Button */}
               <button
                 type="submit"
@@ -119,19 +160,68 @@ const Dashboard = () => {
               </button>
             </form>
           </div>
-          
+
         );
       // Other cases (users, view-patients) remain the same
       case "users":
         return (
-          <div className="w-full p-8 bg-white rounded-xl shadow-xl border border-teal-300">
-            <h1 className="text-3xl font-extrabold text-teal-600 mb-6 text-center">
-              Users
-            </h1>
-            <div className="text-center">
-              <p className="text-lg text-teal-800 mb-6">
-                Manage patients and admins. Here you can view all users.
-              </p>
+          <div className="p-6 min-h-screen ">
+            <h1 className="text-3xl font-bold text-teal-700">Dashboard</h1>
+
+            {/* Users Table */}
+            <div className="mt-6 bg-white p-6 rounded-lg shadow-lg border border-gray-300">
+              <h2 className="text-2xl font-semibold text-gray-700 mb-4">Users List</h2>
+              <table className="w-full border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-teal-700 text-white text-lg">
+                    <th className="border border-gray-300 p-4">#</th>
+                    <th className="border border-gray-300 p-4">Name</th>
+                    <th className="border border-gray-300 p-4">Email</th>
+                    <th className="border border-gray-300 p-4">Role</th>
+                    <th className="border border-gray-300 p-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.length > 0 ? (
+                    users.map((user, index) => (
+                      <tr
+                        key={user._id}
+                        className={`text-center border border-gray-300 hover:bg-gray-100 ${user.role === "admin" ? "bg-yellow-100 font-bold" : ""
+                          }`}
+                      >
+                        <td className="border border-gray-300 p-4">{index + 1}</td>
+                        <td className="border border-gray-300 p-4">{user.name}</td>
+                        <td className="border border-gray-300 p-4">{user.email}</td>
+                        <td className="border border-gray-300 p-4">
+                          <button
+                            onClick={() => toggleRole(user._id)}
+                            className={`px-3 py-1 text-white rounded-full ${user.role === "admin" ? "bg-yellow-600" : "bg-blue-600"
+                              }`}
+                          >
+                            {user.role === "admin" ? "Admin" : "Patient"}
+                          </button>
+                        </td>
+                        <td className="border border-gray-300 p-4">
+                          <button
+                            onClick={() => handleDelete(user._id)} // Pass the user ID to the delete function
+                            className="flex items-center gap-2 px-4 py-1 bg-red-600 text-white rounded hover:bg-red-700"
+                          >
+                            <FaTrash /> Delete
+                          </button>
+                        </td>
+
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="p-4 text-center text-gray-500">
+                        No users found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+
+              </table>
             </div>
           </div>
         );

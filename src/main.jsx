@@ -5,6 +5,6 @@ import App from "./App";
 import Dashboard from "./pages/Dashboard"; 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <BrowserRouter>
-    <Dashboard />
+    <Dashboard/>
   </BrowserRouter>
 );

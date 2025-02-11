@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
-import Dashboard from "./pages/Dashboard"; // Admin Dashboard page
+import Dashboard from "./pages/Dashboard";
 import Predict from "./pages/Predict";
 import History from "./pages/History";
 import Profile from "./pages/Profile";
@@ -10,40 +10,40 @@ import Register from "./pages/Register";
 import Navbar from "./components/Navbar";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
-import PredictorForm from "./pages/Predict";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState("patient"); // Default role is "patient"
+  const [userRole, setUserRole] = useState("patient");
   const location = useLocation();
 
   useEffect(() => {
-    // Check authentication status and role from localStorage
-    const authStatus = localStorage.getItem("isAuthenticated");
-    const role = localStorage.getItem("role");
+    // Check auth state whenever the component mounts
+    const checkAuth = () => {
+      const authStatus = localStorage.getItem("isAuthenticated") === "true";
+      const role = localStorage.getItem("role") || "patient";
+      setIsAuthenticated(authStatus);
+      setUserRole(role);
+    };
 
-    setIsAuthenticated(authStatus === "true");
-    setUserRole(role || "patient");
+    checkAuth();
+    window.addEventListener("storage", checkAuth); // Listen for changes in localStorage
+
+    return () => window.removeEventListener("storage", checkAuth);
   }, []);
 
   return (
     <div className="App">
-      {/* Hide Navbar on Login and Register Pages */}
-      {location.pathname !== "/login" && location.pathname !== "/register" && <Navbar />}
+      {/* Hide Navbar on Login/Register */}
+      {location.pathname !== "/login" && location.pathname !== "/register" && <Navbar isAuthenticated={isAuthenticated} />}
 
       <Routes>
-        {/* Redirect unauthenticated users to login */}
-        <Route
-          path="/"
-          element={isAuthenticated ? (userRole === "admin" ? <Dashboard /> : <Home />) : <Navigate to="/login" />}
-        />
-        <Route path="/login" element={<Login />} />
+        <Route path="/" element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} />
+        <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} setUserRole={setUserRole} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/about" element={isAuthenticated ? <About /> : <Navigate to="/login" />} />
-        <Route path="/predict" element={isAuthenticated ? <PredictorForm /> : <Navigate to="/login" />} />
+        <Route path="/predict" element={isAuthenticated ? <Predict /> : <Navigate to="/login" />} />
         <Route path="/history" element={isAuthenticated ? <History /> : <Navigate to="/login" />} />
         <Route path="/contact" element={isAuthenticated ? <Contact /> : <Navigate to="/login" />} />
-        {/* Admin Dashboard route */}
         <Route path="/dashboard" element={isAuthenticated && userRole === "admin" ? <Dashboard /> : <Navigate to="/" />} />
       </Routes>
     </div>
